@@ -5,7 +5,11 @@
 //  Copyright © 2023 - 2025 Kùzu Inc.
 //  This code is licensed under MIT license (see LICENSE for details)
 
-@_implementationOnly import cxx_ladybug
+#if prebuilt
+internal import cxx_ladybug_prebuilt
+#else
+internal import cxx_ladybug
+#endif
 
 /// Represents a connection to a Ladybug database.
 public final class Connection: @unchecked Sendable {

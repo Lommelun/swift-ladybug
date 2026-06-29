@@ -6,7 +6,11 @@
 //  This code is licensed under MIT license (see LICENSE for details)
 
 import Foundation
-@_implementationOnly import cxx_ladybug
+#if prebuilt
+internal import cxx_ladybug_prebuilt
+#else
+internal import cxx_ladybug
+#endif
 
 /// Constants for time unit conversions
 private let MILLISECONDS_IN_A_SECOND: Double = 1_000

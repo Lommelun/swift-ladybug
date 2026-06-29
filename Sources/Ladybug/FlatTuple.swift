@@ -6,7 +6,11 @@
 //  This code is licensed under MIT license (see LICENSE for details)
 
 import Foundation
-@_implementationOnly import cxx_ladybug
+#if prebuilt
+internal import cxx_ladybug_prebuilt
+#else
+internal import cxx_ladybug
+#endif
 
 /// A class representing a row in the result set of a query.
 /// FlatTuple provides access to the values in a query result row and methods to convert them to different formats.

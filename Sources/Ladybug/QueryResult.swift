@@ -6,7 +6,11 @@
 //  This code is licensed under MIT license (see LICENSE for details)
 
 import Foundation
-@_implementationOnly import cxx_ladybug
+#if prebuilt
+internal import cxx_ladybug_prebuilt
+#else
+internal import cxx_ladybug
+#endif
 
 /// A class representing the result of a query, which can be used to iterate over the result set.
 /// QueryResult is returned by the `query` and `execute` methods of Connection.

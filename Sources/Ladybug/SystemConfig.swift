@@ -6,7 +6,11 @@
 //  This code is licensed under MIT license (see LICENSE for details)
 
 import Foundation
-@_implementationOnly import cxx_ladybug
+#if prebuilt
+internal import cxx_ladybug_prebuilt
+#else
+internal import cxx_ladybug
+#endif
 
 /// Represents the configuration of Ladybug database system.
 ///
