@@ -6,8 +6,10 @@
 //  This code is licensed under MIT license (see LICENSE for details)
 
 import Foundation
-#if prebuilt
+#if bundled
 internal import cxx_ladybug_prebuilt
+#elseif homebrew
+internal import cxx_ladybug_system
 #else
 internal import cxx_ladybug
 #endif

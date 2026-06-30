@@ -5,7 +5,33 @@ import PackageDescription
 import Foundation
 
 let usePrebuiltLadybug = Context.environment["LBUG_USE_PREBUILT"] == "1"
-let prebuiltLadybugDirectory = Context.environment["LBUG_TARGET_DIR"] ?? "lib"
+let prebuiltLadybugDirectory = Context.environment["LBUG_TARGET_DIR"] ?? "\(Context.packageDirectory)/lib"
+
+func resolveHomebrewLadybugLibDirectory() -> String {
+    if let override = Context.environment["LBUG_HOMEBREW_PREFIX"] {
+        return "\(override)/lib"
+    }
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+    process.arguments = ["brew", "--prefix", "ladybug"]
+    let pipe = Pipe()
+    process.standardOutput = pipe
+    process.standardError = FileHandle.nullDevice
+    do {
+        try process.run()
+        process.waitUntilExit()
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        if process.terminationStatus == 0,
+            let prefix = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+            !prefix.isEmpty
+        {
+            return "\(prefix)/lib"
+        }
+    } catch {}
+    return "/opt/homebrew/opt/ladybug/lib"
+}
+
+let homebrewLadybugLibDirectory = resolveHomebrewLadybugLibDirectory()
 
 let package = Package(
     name: "swift-ladybug",
@@ -20,12 +46,13 @@ let package = Package(
             targets: ["Ladybug"]),
     ],
     traits: [
-        .trait(name: "prebuilt"),
+        .trait(name: "homebrew"),
+        .trait(name: "bundled"),
         .trait(name: "source"),
-        .default(enabledTraits: [usePrebuiltLadybug ? "prebuilt" : "source"]),
+        .default(enabledTraits: [usePrebuiltLadybug ? "bundled" : "source"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-docc-plugin", branch: "1.4.5"),
+        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.5.0"),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -33,18 +60,29 @@ let package = Package(
         .target(
             name: "Ladybug",
             dependencies: [
+                .target(name: "cxx-ladybug-system", condition: .when(traits: ["homebrew"])),
                 .target(name: "cxx-ladybug", condition: .when(traits: ["source"])),
-                .target(name: "cxx-ladybug-prebuilt", condition: .when(traits: ["prebuilt"])),
+                .target(name: "cxx-ladybug-prebuilt", condition: .when(traits: ["bundled"])),
             ]
         ),
         .target(
             name: "cxx-ladybug-prebuilt",
-            path: "Sources/cxx-ladybug-prebuilt",
             publicHeadersPath: "include",
             linkerSettings: [
                 .unsafeFlags([
                     "-L\(prebuiltLadybugDirectory)",
                     "-Xlinker", "-rpath", "-Xlinker", prebuiltLadybugDirectory,
+                ]),
+                .linkedLibrary("lbug"),
+            ]
+        ),
+        .target(
+            name: "cxx-ladybug-system",
+            publicHeadersPath: "include",
+            linkerSettings: [
+                .unsafeFlags([
+                    "-L\(homebrewLadybugLibDirectory)",
+                    "-Xlinker", "-rpath", "-Xlinker", homebrewLadybugLibDirectory,
                 ]),
                 .linkedLibrary("lbug"),
             ]
@@ -1153,7 +1191,7 @@ let package = Package(
             linkerSettings: [
                 .linkedLibrary("atomic", .when(platforms: [.linux]))
             ]
-        )
+        ),
     ],
     cLanguageStandard: .c11,
     cxxLanguageStandard: .cxx20

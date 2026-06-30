@@ -5,8 +5,10 @@
 //  Copyright © 2023 - 2025 Kùzu Inc.
 //  This code is licensed under MIT license (see LICENSE for details)
 
-#if prebuilt
+#if bundled
 internal import cxx_ladybug_prebuilt
+#elseif homebrew
+internal import cxx_ladybug_system
 #else
 internal import cxx_ladybug
 #endif
